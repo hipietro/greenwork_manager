@@ -5,8 +5,11 @@ import type { Equipment } from "../types/equipment";
 
 export function EquipmentPage() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [editingEquipmentId, setEditingEquipmentId] = useState<number | null>(null);
+
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
+
   const [showInactive, setShowInactive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +34,24 @@ export function EquipmentPage() {
     loadEquipment();
   }, []);
 
+  function resetForm() {
+    setEditingEquipmentId(null);
+    setName("");
+    setNotes("");
+  }
+
+  function handleEdit(item: Equipment) {
+    setEditingEquipmentId(item.id);
+    setName(item.name);
+    setNotes(item.notes || "");
+    setErrorMessage(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -43,16 +64,24 @@ export function EquipmentPage() {
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      await apiRequest<Equipment>("/equipment", {
-        method: "POST",
-        body: {
-          name,
-          notes,
-        },
-      });
+      const payload = {
+        name,
+        notes,
+      };
 
-      setName("");
-      setNotes("");
+      if (editingEquipmentId) {
+        await apiRequest<Equipment>(`/equipment/${editingEquipmentId}`, {
+          method: "PUT",
+          body: payload,
+        });
+      } else {
+        await apiRequest<Equipment>("/equipment", {
+          method: "POST",
+          body: payload,
+        });
+      }
+
+      resetForm();
       await loadEquipment();
     } catch (error: any) {
       console.error(error);
@@ -62,21 +91,17 @@ export function EquipmentPage() {
     }
   }
 
-  async function handleDeactivate(id: number) {
-    const confirmed = window.confirm(
-      "Vuoi disattivare questa attrezzatura? Non sarà più mostrata tra quelle attive."
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  async function deactivateEquipment(id: number) {
     try {
       setErrorMessage(null);
 
       await apiRequest<Equipment>(`/equipment/${id}/deactivate`, {
         method: "PATCH",
       });
+
+      if (editingEquipmentId === id) {
+        resetForm();
+      }
 
       await loadEquipment();
     } catch (error: any) {
@@ -85,7 +110,7 @@ export function EquipmentPage() {
     }
   }
 
-  async function handleActivate(id: number) {
+  async function activateEquipment(id: number) {
     try {
       setErrorMessage(null);
 
@@ -100,9 +125,9 @@ export function EquipmentPage() {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function deleteEquipment(id: number) {
     const confirmed = window.confirm(
-      "Vuoi eliminare definitivamente questa attrezzatura? L'operazione non può essere annullata."
+      "Vuoi eliminare definitivamente questa attrezzatura?"
     );
 
     if (!confirmed) {
@@ -115,6 +140,10 @@ export function EquipmentPage() {
       await apiRequest<null>(`/equipment/${id}`, {
         method: "DELETE",
       });
+
+      if (editingEquipmentId === id) {
+        resetForm();
+      }
 
       await loadEquipment();
     } catch (error: any) {
@@ -131,7 +160,7 @@ export function EquipmentPage() {
       <div className="page-header">
         <div>
           <h2>Attrezzature</h2>
-          <p>Gestisci le attrezzature utilizzabili nei cantieri.</p>
+          <p>Gestisci l'elenco delle attrezzature usate nei cantieri.</p>
         </div>
       </div>
 
@@ -139,14 +168,33 @@ export function EquipmentPage() {
 
       <div className="content-grid">
         <form className="panel form-panel" onSubmit={handleSubmit}>
-          <h3>Nuova attrezzatura</h3>
+          <div className="form-title-row">
+            <div>
+              <h3>{editingEquipmentId ? "Modifica attrezzatura" : "Nuova attrezzatura"}</h3>
+              {editingEquipmentId && (
+                <p className="panel-subtitle">
+                  Stai modificando un'attrezzatura già registrata.
+                </p>
+              )}
+            </div>
+
+            {editingEquipmentId && (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={resetForm}
+              >
+                Annulla
+              </button>
+            )}
+          </div>
 
           <label className="form-field">
             <span>Nome attrezzatura</span>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Es. Tagliaerba Honda"
+              placeholder="Es. Tagliaerba"
             />
           </label>
 
@@ -155,13 +203,17 @@ export function EquipmentPage() {
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Note opzionali"
-              rows={4}
+              placeholder="Es. lama da controllare, usare solo per siepi alte..."
+              rows={3}
             />
           </label>
 
           <button className="primary-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Salvataggio..." : "Salva attrezzatura"}
+            {isSubmitting
+              ? "Salvataggio..."
+              : editingEquipmentId
+                ? "Salva modifiche"
+                : "Aggiungi attrezzatura"}
           </button>
         </form>
 
@@ -170,7 +222,7 @@ export function EquipmentPage() {
             <div>
               <h3>Attrezzature attive</h3>
               <p className="panel-subtitle">
-                Queste attrezzature saranno disponibili nella creazione dei cantieri.
+                Attrezzature disponibili nella creazione dei cantieri.
               </p>
             </div>
           </div>
@@ -184,75 +236,96 @@ export function EquipmentPage() {
               {activeEquipment.map((item) => (
                 <article key={item.id} className="entity-item">
                   <div>
-                    <h4>{item.name}</h4>
-                    {item.notes && <p>{item.notes}</p>}
-                  </div>
-
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => handleDeactivate(item.id)}
-                  >
-                    Disattiva
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="panel inactive-panel">
-        <div className="panel-header">
-          <div>
-            <h3>Attrezzature disattivate</h3>
-            <p className="panel-subtitle">
-              Le attrezzature disattivate non vengono mostrate tra quelle disponibili.
-            </p>
-          </div>
-
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => setShowInactive((value) => !value)}
-          >
-            {showInactive ? "Nascondi" : `Mostra (${inactiveEquipment.length})`}
-          </button>
-        </div>
-
-        {showInactive &&
-          (inactiveEquipment.length === 0 ? (
-            <p className="empty-state">Nessuna attrezzatura disattivata.</p>
-          ) : (
-            <div className="entity-list">
-              {inactiveEquipment.map((item) => (
-                <article key={item.id} className="entity-item muted">
-                  <div>
-                    <h4>{item.name}</h4>
-                    {item.notes && <p>{item.notes}</p>}
+                    <strong>{item.name}</strong>
+                    <p>{item.notes || "Nessuna nota"}</p>
                   </div>
 
                   <div className="actions-row">
                     <button
                       className="secondary-button"
                       type="button"
-                      onClick={() => handleActivate(item.id)}
+                      onClick={() => handleEdit(item)}
                     >
-                      Riattiva
+                      Modifica
                     </button>
 
                     <button
-                      className="danger-button"
+                      className="secondary-button"
                       type="button"
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => deactivateEquipment(item.id)}
                     >
-                      Elimina
+                      Disattiva
                     </button>
                   </div>
                 </article>
               ))}
             </div>
-          ))}
+          )}
+
+          <div className="inactive-panel">
+            <div className="panel-header compact">
+              <div>
+                <h3>Attrezzature non attive</h3>
+                <p className="panel-subtitle">
+                  Attrezzature non più usate nei nuovi cantieri.
+                </p>
+              </div>
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setShowInactive((current) => !current)}
+              >
+                {showInactive ? "Nascondi" : "Mostra"}
+              </button>
+            </div>
+
+            {showInactive && (
+              <>
+                {inactiveEquipment.length === 0 ? (
+                  <p className="empty-state">Nessuna attrezzatura non attiva.</p>
+                ) : (
+                  <div className="entity-list">
+                    {inactiveEquipment.map((item) => (
+                      <article key={item.id} className="entity-item">
+                        <div>
+                          <strong>{item.name}</strong>
+                          <p>{item.notes || "Nessuna nota"}</p>
+                        </div>
+
+                        <div className="actions-row">
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => handleEdit(item)}
+                          >
+                            Modifica
+                          </button>
+
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => activateEquipment(item.id)}
+                          >
+                            Riattiva
+                          </button>
+
+                          <button
+                            className="danger-button"
+                            type="button"
+                            onClick={() => deleteEquipment(item.id)}
+                          >
+                            Elimina
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );
