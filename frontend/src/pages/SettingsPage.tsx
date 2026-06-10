@@ -5,20 +5,21 @@ import type { ConfigItem } from "../types/settings";
 
 type ConfigSectionProps = {
   title: string;
-  description: string;
+  subtitle: string;
+  createLabel: string;
+  inputPlaceholder: string;
   endpoint: string;
-  nameLabel: string;
-  placeholder: string;
 };
 
 function ConfigSection({
   title,
-  description,
+  subtitle,
+  createLabel,
+  inputPlaceholder,
   endpoint,
-  nameLabel,
-  placeholder,
 }: ConfigSectionProps) {
   const [items, setItems] = useState<ConfigItem[]>([]);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +43,18 @@ function ConfigSection({
 
   useEffect(() => {
     loadItems();
-  }, [endpoint]);
+  }, []);
+
+  function resetForm() {
+    setEditingItemId(null);
+    setName("");
+  }
+
+  function handleEdit(item: ConfigItem) {
+    setEditingItemId(item.id);
+    setName(item.name);
+    setErrorMessage(null);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,14 +68,23 @@ function ConfigSection({
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      await apiRequest<ConfigItem>(endpoint, {
-        method: "POST",
-        body: {
-          name,
-        },
-      });
+      if (editingItemId) {
+        await apiRequest<ConfigItem>(`${endpoint}/${editingItemId}`, {
+          method: "PUT",
+          body: {
+            name,
+          },
+        });
+      } else {
+        await apiRequest<ConfigItem>(endpoint, {
+          method: "POST",
+          body: {
+            name,
+          },
+        });
+      }
 
-      setName("");
+      resetForm();
       await loadItems();
     } catch (error: any) {
       console.error(error);
@@ -73,19 +94,17 @@ function ConfigSection({
     }
   }
 
-  async function handleDeactivate(id: number) {
-    const confirmed = window.confirm("Vuoi disattivare questa voce?");
-
-    if (!confirmed) {
-      return;
-    }
-
+  async function deactivateItem(id: number) {
     try {
       setErrorMessage(null);
 
       await apiRequest<ConfigItem>(`${endpoint}/${id}/deactivate`, {
         method: "PATCH",
       });
+
+      if (editingItemId === id) {
+        resetForm();
+      }
 
       await loadItems();
     } catch (error: any) {
@@ -94,7 +113,7 @@ function ConfigSection({
     }
   }
 
-  async function handleActivate(id: number) {
+  async function activateItem(id: number) {
     try {
       setErrorMessage(null);
 
@@ -109,9 +128,9 @@ function ConfigSection({
     }
   }
 
-  async function handleDelete(id: number) {
+  async function deleteItem(id: number) {
     const confirmed = window.confirm(
-      "Vuoi eliminare definitivamente questa voce? L'operazione non può essere annullata."
+      "Vuoi eliminare definitivamente questa voce?"
     );
 
     if (!confirmed) {
@@ -124,6 +143,10 @@ function ConfigSection({
       await apiRequest<null>(`${endpoint}/${id}`, {
         method: "DELETE",
       });
+
+      if (editingItemId === id) {
+        resetForm();
+      }
 
       await loadItems();
     } catch (error: any) {
@@ -140,25 +163,36 @@ function ConfigSection({
       <div className="panel-header">
         <div>
           <h3>{title}</h3>
-          <p className="panel-subtitle">{description}</p>
+          <p className="panel-subtitle">{subtitle}</p>
         </div>
       </div>
 
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
       <form className="inline-form" onSubmit={handleSubmit}>
-        <label className="form-field">
-          <span>{nameLabel}</span>
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={placeholder}
-          />
-        </label>
+        <input
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder={inputPlaceholder}
+        />
 
         <button className="primary-button" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvataggio..." : "Aggiungi"}
+          {isSubmitting
+            ? "Salvataggio..."
+            : editingItemId
+              ? "Salva modifiche"
+              : createLabel}
         </button>
+
+        {editingItemId && (
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={resetForm}
+          >
+            Annulla
+          </button>
+        )}
       </form>
 
       <div className="settings-list-block">
@@ -173,69 +207,93 @@ function ConfigSection({
             {activeItems.map((item) => (
               <article key={item.id} className="entity-item">
                 <div>
-                  <h4>{item.name}</h4>
+                  <strong>{item.name}</strong>
                 </div>
 
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => handleDeactivate(item.id)}
-                >
-                  Disattiva
-                </button>
+                <div className="actions-row">
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => handleEdit(item)}
+                  >
+                    Modifica
+                  </button>
+
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => deactivateItem(item.id)}
+                  >
+                    Disattiva
+                  </button>
+                </div>
               </article>
             ))}
           </div>
         )}
       </div>
 
-      <div className="settings-list-block">
+      <div className="inactive-panel">
         <div className="panel-header compact">
           <div>
-            <h4>Voci disattivate</h4>
+            <h4>Voci non attive</h4>
+            <p className="panel-subtitle">
+              Voci nascoste nei nuovi cantieri, ma mantenute nello storico.
+            </p>
           </div>
 
           <button
             className="secondary-button"
             type="button"
-            onClick={() => setShowInactive((value) => !value)}
+            onClick={() => setShowInactive((current) => !current)}
           >
-            {showInactive ? "Nascondi" : `Mostra (${inactiveItems.length})`}
+            {showInactive ? "Nascondi" : "Mostra"}
           </button>
         </div>
 
-        {showInactive &&
-          (inactiveItems.length === 0 ? (
-            <p className="empty-state">Nessuna voce disattivata.</p>
-          ) : (
-            <div className="entity-list">
-              {inactiveItems.map((item) => (
-                <article key={item.id} className="entity-item muted">
-                  <div>
-                    <h4>{item.name}</h4>
-                  </div>
+        {showInactive && (
+          <>
+            {inactiveItems.length === 0 ? (
+              <p className="empty-state">Nessuna voce non attiva.</p>
+            ) : (
+              <div className="entity-list">
+                {inactiveItems.map((item) => (
+                  <article key={item.id} className="entity-item">
+                    <div>
+                      <strong>{item.name}</strong>
+                    </div>
 
-                  <div className="actions-row">
-                    <button
-                      className="secondary-button"
-                      type="button"
-                      onClick={() => handleActivate(item.id)}
-                    >
-                      Riattiva
-                    </button>
+                    <div className="actions-row">
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => handleEdit(item)}
+                      >
+                        Modifica
+                      </button>
 
-                    <button
-                      className="danger-button"
-                      type="button"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      Elimina
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ))}
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => activateItem(item.id)}
+                      >
+                        Riattiva
+                      </button>
+
+                      <button
+                        className="danger-button"
+                        type="button"
+                        onClick={() => deleteItem(item.id)}
+                      >
+                        Elimina
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -247,25 +305,25 @@ export function SettingsPage() {
       <div className="page-header">
         <div>
           <h2>Impostazioni</h2>
-          <p>Personalizza le liste operative usate nell’applicazione.</p>
+          <p>Configura le voci operative usate nei cantieri.</p>
         </div>
       </div>
 
       <div className="settings-stack">
         <ConfigSection
-          title="Tipi di intervento"
-          description="Gestisci i tipi di lavoro usati nei cantieri."
+          title="Tipi intervento"
+          subtitle="Gestisci i tipi di lavoro disponibili nella creazione dei cantieri."
+          createLabel="Aggiungi tipo"
+          inputPlaceholder="Es. Potatura alberi"
           endpoint="/work-types"
-          nameLabel="Nome tipo intervento"
-          placeholder="Es. Posa prato sintetico"
         />
 
         <ConfigSection
           title="Stati cantiere"
-          description="Gestisci gli stati disponibili per i cantieri."
+          subtitle="Gestisci gli stati disponibili per seguire l'avanzamento dei lavori."
+          createLabel="Aggiungi stato"
+          inputPlaceholder="Es. Da finire"
           endpoint="/job-statuses"
-          nameLabel="Nome stato cantiere"
-          placeholder="Es. Da richiamare"
         />
       </div>
     </section>
