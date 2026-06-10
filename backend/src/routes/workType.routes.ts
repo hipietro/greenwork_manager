@@ -123,7 +123,36 @@ router.patch("/:id/deactivate", async (req, res) => {
     res.status(500).json({ message: "Errore durante la disattivazione del tipo di intervento." });
   }
 });
+/**
+ * PATCH /api/work-types/:id/activate
+ * Reactivates a work type.
+ */
+router.patch("/:id/activate", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
 
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ message: "ID tipo di intervento non valido." });
+    }
+
+    const workType = await prisma.workType.update({
+      where: { id },
+      data: {
+        isActive: true,
+      },
+    });
+
+    res.json(workType);
+  } catch (error: any) {
+    console.error("Error activating work type:", error);
+
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "Tipo di intervento non trovato." });
+    }
+
+    res.status(500).json({ message: "Errore durante la riattivazione del tipo di intervento." });
+  }
+});
 /**
  * DELETE /api/work-types/:id
  * Deletes a work type only if it is not used in any job.

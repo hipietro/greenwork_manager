@@ -405,3 +405,42 @@ select {
     flex-wrap: wrap;
   }
 }
+
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.settings-list-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-list-block h4 {
+  margin: 0;
+}
+
+.panel-header.compact {
+  margin-bottom: 0;
+}
+
+@media (max-width: 850px) {
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+}

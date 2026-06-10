@@ -123,6 +123,36 @@ router.patch("/:id/deactivate", async (req, res) => {
     res.status(500).json({ message: "Errore durante la disattivazione dello stato cantiere." });
   }
 });
+/**
+ * PATCH /api/job-statuses/:id/activate
+ * Reactivates a job status.
+ */
+router.patch("/:id/activate", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ message: "ID stato cantiere non valido." });
+    }
+
+    const jobStatus = await prisma.jobStatus.update({
+      where: { id },
+      data: {
+        isActive: true,
+      },
+    });
+
+    res.json(jobStatus);
+  } catch (error: any) {
+    console.error("Error activating job status:", error);
+
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "Stato cantiere non trovato." });
+    }
+
+    res.status(500).json({ message: "Errore durante la riattivazione dello stato cantiere." });
+  }
+});
 
 /**
  * DELETE /api/job-statuses/:id
