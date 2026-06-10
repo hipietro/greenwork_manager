@@ -1,13 +1,98 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+}
+
+model Employee {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  phone     String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WorkType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+}
+
+model JobStatus {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+}
+
+model Equipment {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobEquipment JobEquipment[]
+}
+
+model Job {
+  id                 Int      @id @default(autoincrement())
+  title              String
+  address            String?
+  scheduledDate      DateTime
+  scheduledStartTime String?
+  scheduledEndTime   String?
+  operationalNotes   String?
+  finalNotes         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  clientId    Int
+  workTypeId  Int?
+  jobStatusId Int?
+
+  client    Client     @relation(fields: [clientId], references: [id])
+  workType  WorkType?  @relation(fields: [workTypeId], references: [id])
+  jobStatus JobStatus? @relation(fields: [jobStatusId], references: [id])
+
+  equipment JobEquipment[]
+}
+
+model JobEquipment {
+  id          Int      @id @default(autoincrement())
+  jobId       Int
+  equipmentId Int
+  createdAt   DateTime @default(now())
+
+  job       Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, equipmentId])
 }
