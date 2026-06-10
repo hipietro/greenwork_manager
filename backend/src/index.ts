@@ -5,6 +5,7 @@ import equipmentRoutes from "./routes/equipment.routes";
 import workTypeRoutes from "./routes/workType.routes";
 import jobStatusRoutes from "./routes/jobStatus.routes";
 import employeeRoutes from "./routes/employee.routes";
+import jobRoutes from "./routes/job.routes";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use("/api/equipment", equipmentRoutes);
 app.use("/api/work-types", workTypeRoutes);
 app.use("/api/job-statuses", jobStatusRoutes);
 app.use("/api/employees", employeeRoutes);
+app.use("/api/jobs", jobRoutes);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
