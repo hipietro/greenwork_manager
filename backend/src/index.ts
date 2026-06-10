@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import equipmentRoutes from "./routes/equipment.routes";
 import workTypeRoutes from "./routes/workType.routes";
 import jobStatusRoutes from "./routes/jobStatus.routes";
+import employeeRoutes from "./routes/employee.routes";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/work-types", workTypeRoutes);
 app.use("/api/job-statuses", jobStatusRoutes);
+app.use("/api/employees", employeeRoutes);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
