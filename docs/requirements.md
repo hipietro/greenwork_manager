@@ -1,172 +1,149 @@
 # Requirements
 
-## Project Overview
+## Project Goal
 
-GreenWork Manager is a lightweight management application for small gardening companies.
+GreenWork Manager is designed for small gardening companies that need a lightweight tool to organize daily work, employees, equipment and attendance.
 
-The application helps organize daily gardening jobs, manage clients and employees, assign equipment, and keep a simple operational history of completed and pending work.
+The application focuses on practical daily operations rather than accounting, invoicing or complex customer relationship management.
 
-The application does not handle invoices, employee salaries, hourly costs, payments or accounting data.
+## Functional Requirements
 
-## Main User
+### Dashboard
 
-The main user is the owner or operational manager of a small gardening company with around 10 employees.
+The application must provide a daily dashboard showing the jobs scheduled for a selected day.
 
-## Core Principle
+The dashboard should display:
 
-The application is designed specifically for gardening companies.
+* total jobs for the selected day
+* job status summary
+* jobs without assigned equipment
+* list of scheduled jobs
 
-However, the main operational lists must be configurable by the user and must not be hardcoded in the source code.
+Multi-day jobs must be visible on every day between their start date and end date.
 
-Configurable lists include:
+### Jobs
 
-- job types;
-- equipment;
-- job statuses.
+The application must allow the user to create, view, edit and delete gardening jobs.
 
-The application may provide initial default values related to gardening, but the user must be able to add, edit, disable or remove them.
+Each job can include:
 
-## Employees
+* title
+* customer or location name
+* address
+* scheduled start date
+* optional scheduled end date
+* scheduled start time
+* scheduled end time
+* work type
+* job status
+* assigned equipment
+* operational notes
+* final notes
 
-The user can:
+The customer is intentionally stored as free text inside the job. The project does not currently include a separate customer registry.
 
-- create an employee;
-- edit employee information;
-- deactivate an employee;
-- view active and inactive employees.
+### Employees
 
-Each employee has:
+The application must allow the user to manage employees.
 
-- full name;
-- phone number;
-- active status;
-- notes.
+Each employee can include:
 
-The application does not manage employee roles, salaries or hourly costs.
+* full name
+* phone number
+* notes
+* active or inactive status
 
-## Clients
+Inactive employees must remain available in the historical data but should not be used by default in new daily operations.
 
-The user can:
+### Attendance
 
-- create a client;
-- edit client information;
-- deactivate a client;
-- view the job history of a client.
+The application must allow the user to register daily attendance records for employees.
 
-Each client has:
+Each attendance record must include:
 
-- name;
-- phone number;
-- optional email;
-- address;
-- notes;
-- active status.
+* date
+* employee
+* present or absent status
+* check-in time
+* check-out time
+* notes
 
-Client notes can include practical information such as gate access, preferred contact time, pets in the garden or specific instructions.
+The system must prevent duplicate attendance records for the same employee on the same date.
 
-## Gardening Jobs
+### Equipment
 
-The user can create and manage gardening jobs.
+The application must allow the user to manage gardening equipment.
 
-Each job has:
+Each equipment item can include:
 
-- client;
-- title;
-- address;
-- scheduled date;
-- optional scheduled start time;
-- optional scheduled end time;
-- job type selected from a configurable list;
-- job status selected from a configurable list;
-- assigned or used equipment;
-- operational notes;
-- final notes.
+* name
+* notes
+* active or inactive status
 
-Job examples:
+Equipment can be assigned to jobs.
 
-- lawn mowing;
-- hedge trimming;
-- pruning;
-- garden maintenance;
-- irrigation check;
-- green area cleaning.
+### Work Types
 
-## Equipment
+The application must allow the user to configure the list of available work types.
 
-The user can manage a configurable list of equipment.
+Examples:
 
-Each equipment item has:
+* lawn mowing
+* hedge trimming
+* pruning
+* garden maintenance
+* irrigation check
 
-- name;
-- active status;
-- notes.
+Work types must be editable and can be activated or deactivated.
 
-Example default equipment:
+### Job Statuses
 
-- van;
-- lawn mower;
-- brush cutter;
-- leaf blower;
-- hedge trimmer;
-- chainsaw;
-- ladder;
-- irrigation kit.
+The application must allow the user to configure job statuses.
 
-## Job Types
+Examples:
 
-The user can manage a configurable list of job types.
+* scheduled
+* in progress
+* completed
+* to be completed
+* postponed
+* cancelled
+* suspended due to rain
 
-Example default job types:
+Job statuses must be editable and can be activated or deactivated.
 
-- ordinary garden maintenance;
-- lawn mowing;
-- pruning;
-- hedge trimming;
-- green area cleaning;
-- irrigation check;
-- lawn treatment;
-- other.
+## Non-Functional Requirements
 
-## Job Statuses
+### Simplicity
 
-The user can manage a configurable list of job statuses.
+The application should remain simple and practical for a small company.
 
-Example default statuses:
+### Configurability
 
-- scheduled;
-- in progress;
-- completed;
-- to complete;
-- postponed;
-- cancelled;
-- suspended due to rain.
+Operational lists such as equipment, work types and job statuses should be configurable by the user.
 
-## Dashboard
+### Data Persistence
 
-The dashboard shows a daily overview.
+Data must be stored in PostgreSQL.
 
-It should display:
+### Maintainability
 
-- jobs scheduled for the selected day;
-- completed jobs;
-- postponed jobs;
-- jobs without equipment assigned;
-- job status summary.
+The project should use a clear folder structure, typed frontend and backend code, and a database schema managed through Prisma.
 
-## Reports and History
+### Portfolio Quality
 
-The user can consult:
+The repository should show a clean development history, readable documentation and a realistic full-stack architecture.
 
-- job history by client;
-- jobs grouped by status;
-- equipment usage history;
-- jobs by period.
+## Out of Scope for the Current Version
 
-## CSV Export
+The current version does not include:
 
-The user can export:
-
-- clients;
-- employees;
-- jobs;
-- equipment usage.
+* invoicing
+* estimates
+* accounting
+* complex customer management
+* user authentication
+* role-based permissions
+* payroll calculations
+* mobile app
+* deployment configuration
