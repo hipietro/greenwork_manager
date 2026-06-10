@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { apiRequest } from "../services/api";
 import type { Equipment } from "../types/equipment";
 
@@ -6,6 +7,7 @@ export function EquipmentPage() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export function EquipmentPage() {
 
   async function handleDeactivate(id: number) {
     const confirmed = window.confirm(
-      "Vuoi disattivare questa attrezzatura? Non verrà eliminata dallo storico."
+      "Vuoi disattivare questa attrezzatura? Non sarà più mostrata tra quelle attive."
     );
 
     if (!confirmed) {
@@ -80,6 +82,44 @@ export function EquipmentPage() {
     } catch (error: any) {
       console.error(error);
       setErrorMessage(error.message || "Errore durante la disattivazione dell'attrezzatura.");
+    }
+  }
+
+  async function handleActivate(id: number) {
+    try {
+      setErrorMessage(null);
+
+      await apiRequest<Equipment>(`/equipment/${id}/activate`, {
+        method: "PATCH",
+      });
+
+      await loadEquipment();
+    } catch (error: any) {
+      console.error(error);
+      setErrorMessage(error.message || "Errore durante la riattivazione dell'attrezzatura.");
+    }
+  }
+
+  async function handleDelete(id: number) {
+    const confirmed = window.confirm(
+      "Vuoi eliminare definitivamente questa attrezzatura? L'operazione non può essere annullata."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setErrorMessage(null);
+
+      await apiRequest<null>(`/equipment/${id}`, {
+        method: "DELETE",
+      });
+
+      await loadEquipment();
+    } catch (error: any) {
+      console.error(error);
+      setErrorMessage(error.message || "Errore durante l'eliminazione dell'attrezzatura.");
     }
   }
 
@@ -126,7 +166,14 @@ export function EquipmentPage() {
         </form>
 
         <div className="panel">
-          <h3>Attrezzature attive</h3>
+          <div className="panel-header">
+            <div>
+              <h3>Attrezzature attive</h3>
+              <p className="panel-subtitle">
+                Queste attrezzature saranno disponibili nella creazione dei cantieri.
+              </p>
+            </div>
+          </div>
 
           {isLoading ? (
             <p className="empty-state">Caricamento attrezzature...</p>
@@ -155,24 +202,58 @@ export function EquipmentPage() {
         </div>
       </div>
 
-      {inactiveEquipment.length > 0 && (
-        <div className="panel inactive-panel">
-          <h3>Attrezzature disattivate</h3>
-
-          <div className="entity-list">
-            {inactiveEquipment.map((item) => (
-              <article key={item.id} className="entity-item muted">
-                <div>
-                  <h4>{item.name}</h4>
-                  {item.notes && <p>{item.notes}</p>}
-                </div>
-
-                <span className="status-badge">Disattivata</span>
-              </article>
-            ))}
+      <div className="panel inactive-panel">
+        <div className="panel-header">
+          <div>
+            <h3>Attrezzature disattivate</h3>
+            <p className="panel-subtitle">
+              Le attrezzature disattivate non vengono mostrate tra quelle disponibili.
+            </p>
           </div>
+
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => setShowInactive((value) => !value)}
+          >
+            {showInactive ? "Nascondi" : `Mostra (${inactiveEquipment.length})`}
+          </button>
         </div>
-      )}
+
+        {showInactive &&
+          (inactiveEquipment.length === 0 ? (
+            <p className="empty-state">Nessuna attrezzatura disattivata.</p>
+          ) : (
+            <div className="entity-list">
+              {inactiveEquipment.map((item) => (
+                <article key={item.id} className="entity-item muted">
+                  <div>
+                    <h4>{item.name}</h4>
+                    {item.notes && <p>{item.notes}</p>}
+                  </div>
+
+                  <div className="actions-row">
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => handleActivate(item.id)}
+                    >
+                      Riattiva
+                    </button>
+
+                    <button
+                      className="danger-button"
+                      type="button"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      Elimina
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ))}
+      </div>
     </section>
   );
 }

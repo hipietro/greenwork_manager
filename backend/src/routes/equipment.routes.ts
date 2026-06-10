@@ -125,6 +125,36 @@ router.patch("/:id/deactivate", async (req, res) => {
     res.status(500).json({ message: "Errore durante la disattivazione dell'attrezzatura." });
   }
 });
+/**
+ * PATCH /api/equipment/:id/activate
+ * Reactivates an equipment item.
+ */
+router.patch("/:id/activate", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ message: "ID attrezzatura non valido." });
+    }
+
+    const equipment = await prisma.equipment.update({
+      where: { id },
+      data: {
+        isActive: true,
+      },
+    });
+
+    res.json(equipment);
+  } catch (error: any) {
+    console.error("Error activating equipment:", error);
+
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "Attrezzatura non trovata." });
+    }
+
+    res.status(500).json({ message: "Errore durante la riattivazione dell'attrezzatura." });
+  }
+});
 
 /**
  * DELETE /api/equipment/:id
@@ -166,5 +196,6 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: "Errore durante l'eliminazione dell'attrezzatura." });
   }
 });
+
 
 export default router;
