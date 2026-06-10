@@ -7,6 +7,7 @@ import jobStatusRoutes from "./routes/jobStatus.routes";
 import employeeRoutes from "./routes/employee.routes";
 import jobRoutes from "./routes/job.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import attendanceRoutes from "./routes/attendance.routes";
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use("/api/job-statuses", jobStatusRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

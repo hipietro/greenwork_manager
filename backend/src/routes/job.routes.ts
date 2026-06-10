@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
     const { date, statusId } = req.query;
 
     const where: any = {};
-
+/*
     if (typeof date === "string") {
       const start = new Date(`${date}T00:00:00.000Z`);
       const end = new Date(`${date}T23:59:59.999Z`);
@@ -25,7 +25,31 @@ router.get("/", async (req, res) => {
         lte: end,
       };
     }
+*/
+if (typeof date === "string") {
+  const start = new Date(`${date}T00:00:00.000Z`);
+  const end = new Date(`${date}T23:59:59.999Z`);
 
+  where.AND = [
+    {
+      scheduledDate: {
+        lte: end,
+      },
+    },
+    {
+      OR: [
+        {
+          scheduledEndDate: null,
+        },
+        {
+          scheduledEndDate: {
+            gte: start,
+          },
+        },
+      ],
+    },
+  ];
+}
     if (typeof statusId === "string" && !Number.isNaN(Number(statusId))) {
       where.jobStatusId = Number(statusId);
     }
@@ -105,6 +129,7 @@ router.post("/", async (req, res) => {
       customerName,
       address,
       scheduledDate,
+      scheduledEndDate,
       scheduledStartTime,
       scheduledEndTime,
       workTypeId,
@@ -123,9 +148,20 @@ router.post("/", async (req, res) => {
     }
 
     const parsedDate = new Date(scheduledDate);
+    const parsedEndDate = scheduledEndDate ? new Date(scheduledEndDate) : null;
 
     if (Number.isNaN(parsedDate.getTime())) {
       return res.status(400).json({ message: "Data cantiere non valida." });
+    }
+
+    if (parsedEndDate && Number.isNaN(parsedEndDate.getTime())) {
+      return res.status(400).json({ message: "Data fine cantiere non valida." });
+    }
+
+    if (parsedEndDate && parsedEndDate < parsedDate) {
+      return res.status(400).json({
+        message: "La data di fine non può essere precedente alla data di inizio.",
+      });
     }
 
     const job = await prisma.job.create({
@@ -134,6 +170,7 @@ router.post("/", async (req, res) => {
         customerName: customerName?.trim() || null,
         address: address?.trim() || null,
         scheduledDate: parsedDate,
+        scheduledEndDate: parsedEndDate,
         scheduledStartTime: scheduledStartTime?.trim() || null,
         scheduledEndTime: scheduledEndTime?.trim() || null,
         workTypeId: typeof workTypeId === "number" ? workTypeId : null,
@@ -190,6 +227,7 @@ router.put("/:id", async (req, res) => {
       customerName,
       address,
       scheduledDate,
+      scheduledEndDate,
       scheduledStartTime,
       scheduledEndTime,
       workTypeId,
@@ -208,6 +246,17 @@ router.put("/:id", async (req, res) => {
     }
 
     const parsedDate = new Date(scheduledDate);
+    const parsedEndDate = scheduledEndDate ? new Date(scheduledEndDate) : null;
+
+if (parsedEndDate && Number.isNaN(parsedEndDate.getTime())) {
+  return res.status(400).json({ message: "Data fine cantiere non valida." });
+}
+
+if (parsedEndDate && parsedEndDate < parsedDate) {
+  return res.status(400).json({
+    message: "La data di fine non può essere precedente alla data di inizio.",
+  });
+}
 
     if (Number.isNaN(parsedDate.getTime())) {
       return res.status(400).json({ message: "Data cantiere non valida." });
@@ -227,6 +276,7 @@ router.put("/:id", async (req, res) => {
           customerName: customerName?.trim() || null,
           address: address?.trim() || null,
           scheduledDate: parsedDate,
+          scheduledEndDate: parsedEndDate,
           scheduledStartTime: scheduledStartTime?.trim() || null,
           scheduledEndTime: scheduledEndTime?.trim() || null,
           workTypeId: typeof workTypeId === "number" ? workTypeId : null,

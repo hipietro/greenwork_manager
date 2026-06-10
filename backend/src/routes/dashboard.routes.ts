@@ -19,11 +19,26 @@ router.get("/daily", async (req, res) => {
 
     const jobs = await prisma.job.findMany({
       where: {
-        scheduledDate: {
-          gte: start,
-          lte: end,
-        },
+  AND: [
+    {
+      scheduledDate: {
+        lte: end,
       },
+    },
+    {
+      OR: [
+        {
+          scheduledEndDate: null,
+        },
+        {
+          scheduledEndDate: {
+            gte: start,
+          },
+        },
+      ],
+    },
+  ],
+},
       orderBy: [
         {
           scheduledDate: "asc",
