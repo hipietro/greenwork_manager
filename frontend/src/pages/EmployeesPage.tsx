@@ -5,9 +5,12 @@ import type { Employee } from "../types/employee";
 
 export function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [editingEmployeeId, setEditingEmployeeId] = useState<number | null>(null);
+
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+
   const [showInactive, setShowInactive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,6 +35,26 @@ export function EmployeesPage() {
     loadEmployees();
   }, []);
 
+  function resetForm() {
+    setEditingEmployeeId(null);
+    setFullName("");
+    setPhone("");
+    setNotes("");
+  }
+
+  function handleEdit(employee: Employee) {
+    setEditingEmployeeId(employee.id);
+    setFullName(employee.fullName);
+    setPhone(employee.phone || "");
+    setNotes(employee.notes || "");
+    setErrorMessage(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -44,18 +67,25 @@ export function EmployeesPage() {
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      await apiRequest<Employee>("/employees", {
-        method: "POST",
-        body: {
-          fullName,
-          phone,
-          notes,
-        },
-      });
+      const payload = {
+        fullName,
+        phone,
+        notes,
+      };
 
-      setFullName("");
-      setPhone("");
-      setNotes("");
+      if (editingEmployeeId) {
+        await apiRequest<Employee>(`/employees/${editingEmployeeId}`, {
+          method: "PUT",
+          body: payload,
+        });
+      } else {
+        await apiRequest<Employee>("/employees", {
+          method: "POST",
+          body: payload,
+        });
+      }
+
+      resetForm();
       await loadEmployees();
     } catch (error: any) {
       console.error(error);
@@ -65,21 +95,17 @@ export function EmployeesPage() {
     }
   }
 
-  async function handleDeactivate(id: number) {
-    const confirmed = window.confirm(
-      "Vuoi disattivare questo dipendente? Non verrà più mostrato tra quelli attivi."
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  async function deactivateEmployee(id: number) {
     try {
       setErrorMessage(null);
 
       await apiRequest<Employee>(`/employees/${id}/deactivate`, {
         method: "PATCH",
       });
+
+      if (editingEmployeeId === id) {
+        resetForm();
+      }
 
       await loadEmployees();
     } catch (error: any) {
@@ -88,7 +114,7 @@ export function EmployeesPage() {
     }
   }
 
-  async function handleActivate(id: number) {
+  async function activateEmployee(id: number) {
     try {
       setErrorMessage(null);
 
@@ -103,9 +129,9 @@ export function EmployeesPage() {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function deleteEmployee(id: number) {
     const confirmed = window.confirm(
-      "Vuoi eliminare definitivamente questo dipendente? L'operazione non può essere annullata."
+      "Vuoi eliminare definitivamente questo dipendente?"
     );
 
     if (!confirmed) {
@@ -118,6 +144,10 @@ export function EmployeesPage() {
       await apiRequest<null>(`/employees/${id}`, {
         method: "DELETE",
       });
+
+      if (editingEmployeeId === id) {
+        resetForm();
+      }
 
       await loadEmployees();
     } catch (error: any) {
@@ -134,7 +164,7 @@ export function EmployeesPage() {
       <div className="page-header">
         <div>
           <h2>Dipendenti</h2>
-          <p>Gestisci l’elenco dei dipendenti attivi e non attivi.</p>
+          <p>Gestisci l'elenco dei dipendenti attivi e non attivi.</p>
         </div>
       </div>
 
@@ -142,7 +172,26 @@ export function EmployeesPage() {
 
       <div className="content-grid">
         <form className="panel form-panel" onSubmit={handleSubmit}>
-          <h3>Nuovo dipendente</h3>
+          <div className="form-title-row">
+            <div>
+              <h3>{editingEmployeeId ? "Modifica dipendente" : "Nuovo dipendente"}</h3>
+              {editingEmployeeId && (
+                <p className="panel-subtitle">
+                  Stai modificando un dipendente già registrato.
+                </p>
+              )}
+            </div>
+
+            {editingEmployeeId && (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={resetForm}
+              >
+                Annulla
+              </button>
+            )}
+          </div>
 
           <label className="form-field">
             <span>Nome completo</span>
@@ -158,7 +207,7 @@ export function EmployeesPage() {
             <input
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              placeholder="Es. 3331234567"
+              placeholder="Es. 333 1234567"
             />
           </label>
 
@@ -167,13 +216,17 @@ export function EmployeesPage() {
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Note opzionali"
-              rows={4}
+              placeholder="Es. disponibile solo la mattina"
+              rows={3}
             />
           </label>
 
           <button className="primary-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Salvataggio..." : "Salva dipendente"}
+            {isSubmitting
+              ? "Salvataggio..."
+              : editingEmployeeId
+                ? "Salva modifiche"
+                : "Aggiungi dipendente"}
           </button>
         </form>
 
@@ -182,7 +235,7 @@ export function EmployeesPage() {
             <div>
               <h3>Dipendenti attivi</h3>
               <p className="panel-subtitle">
-                Questi dipendenti sono attualmente disponibili nell’elenco aziendale.
+                Dipendenti disponibili per presenze e gestione operativa.
               </p>
             </div>
           </div>
@@ -196,53 +249,8 @@ export function EmployeesPage() {
               {activeEmployees.map((employee) => (
                 <article key={employee.id} className="entity-item">
                   <div>
-                    <h4>{employee.fullName}</h4>
-                    {employee.phone && <p>{employee.phone}</p>}
-                    {employee.notes && <p>{employee.notes}</p>}
-                  </div>
-
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => handleDeactivate(employee.id)}
-                  >
-                    Disattiva
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="panel inactive-panel">
-        <div className="panel-header">
-          <div>
-            <h3>Dipendenti disattivati</h3>
-            <p className="panel-subtitle">
-              I dipendenti disattivati non vengono mostrati tra quelli attivi.
-            </p>
-          </div>
-
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => setShowInactive((value) => !value)}
-          >
-            {showInactive ? "Nascondi" : `Mostra (${inactiveEmployees.length})`}
-          </button>
-        </div>
-
-        {showInactive &&
-          (inactiveEmployees.length === 0 ? (
-            <p className="empty-state">Nessun dipendente disattivato.</p>
-          ) : (
-            <div className="entity-list">
-              {inactiveEmployees.map((employee) => (
-                <article key={employee.id} className="entity-item muted">
-                  <div>
-                    <h4>{employee.fullName}</h4>
-                    {employee.phone && <p>{employee.phone}</p>}
+                    <strong>{employee.fullName}</strong>
+                    <p>{employee.phone || "Telefono non indicato"}</p>
                     {employee.notes && <p>{employee.notes}</p>}
                   </div>
 
@@ -250,23 +258,89 @@ export function EmployeesPage() {
                     <button
                       className="secondary-button"
                       type="button"
-                      onClick={() => handleActivate(employee.id)}
+                      onClick={() => handleEdit(employee)}
                     >
-                      Riattiva
+                      Modifica
                     </button>
 
                     <button
-                      className="danger-button"
+                      className="secondary-button"
                       type="button"
-                      onClick={() => handleDelete(employee.id)}
+                      onClick={() => deactivateEmployee(employee.id)}
                     >
-                      Elimina
+                      Disattiva
                     </button>
                   </div>
                 </article>
               ))}
             </div>
-          ))}
+          )}
+
+          <div className="inactive-panel">
+            <div className="panel-header compact">
+              <div>
+                <h3>Dipendenti non attivi</h3>
+                <p className="panel-subtitle">
+                  Dipendenti rimossi dall'uso quotidiano, ma mantenuti nello storico.
+                </p>
+              </div>
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setShowInactive((current) => !current)}
+              >
+                {showInactive ? "Nascondi" : "Mostra"}
+              </button>
+            </div>
+
+            {showInactive && (
+              <>
+                {inactiveEmployees.length === 0 ? (
+                  <p className="empty-state">Nessun dipendente non attivo.</p>
+                ) : (
+                  <div className="entity-list">
+                    {inactiveEmployees.map((employee) => (
+                      <article key={employee.id} className="entity-item">
+                        <div>
+                          <strong>{employee.fullName}</strong>
+                          <p>{employee.phone || "Telefono non indicato"}</p>
+                          {employee.notes && <p>{employee.notes}</p>}
+                        </div>
+
+                        <div className="actions-row">
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => handleEdit(employee)}
+                          >
+                            Modifica
+                          </button>
+
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => activateEmployee(employee.id)}
+                          >
+                            Riattiva
+                          </button>
+
+                          <button
+                            className="danger-button"
+                            type="button"
+                            onClick={() => deleteEmployee(employee.id)}
+                          >
+                            Elimina
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );
