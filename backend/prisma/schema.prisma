@@ -7,20 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Client {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?
-  email     String?
-  address   String?
-  notes     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  jobs Job[]
-}
-
 model Employee {
   id        Int      @id @default(autoincrement())
   fullName  String
@@ -65,6 +51,7 @@ model Equipment {
 model Job {
   id                 Int      @id @default(autoincrement())
   title              String
+  customerName       String?
   address            String?
   scheduledDate      DateTime
   scheduledStartTime String?
@@ -74,11 +61,9 @@ model Job {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  clientId    Int
   workTypeId  Int?
   jobStatusId Int?
 
-  client    Client     @relation(fields: [clientId], references: [id])
   workType  WorkType?  @relation(fields: [workTypeId], references: [id])
   jobStatus JobStatus? @relation(fields: [jobStatusId], references: [id])
 
