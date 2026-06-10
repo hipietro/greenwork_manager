@@ -444,3 +444,213 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+.date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+  color: #33483a;
+}
+
+.wide-form {
+  grid-template-columns: 430px 1fr;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.checkbox-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fbfdfb;
+  border: 1px solid #dce7dd;
+  border-radius: 12px;
+  padding: 9px 10px;
+  color: #2d4c37;
+  font-weight: 600;
+}
+
+.checkbox-item input {
+  width: 16px;
+  height: 16px;
+}
+
+.job-card {
+  border: 1px solid #dce7dd;
+  border-radius: 16px;
+  background: #fbfdfb;
+  padding: 16px;
+}
+
+.job-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.job-card h4 {
+  margin: 0 0 6px;
+}
+
+.job-card p {
+  margin: 0;
+  color: #66736a;
+}
+
+.equipment-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.equipment-tags span {
+  background: #f2f6ec;
+  color: #3d552d;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.job-notes {
+  margin-top: 12px !important;
+  line-height: 1.5;
+}
+
+@media (max-width: 1050px) {
+  .wide-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 850px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .job-card-header {
+    flex-direction: column;
+  }
+}.date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+  color: #33483a;
+}
+
+.wide-form {
+  grid-template-columns: 430px 1fr;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.checkbox-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fbfdfb;
+  border: 1px solid #dce7dd;
+  border-radius: 12px;
+  padding: 9px 10px;
+  color: #2d4c37;
+  font-weight: 600;
+}
+
+.checkbox-item input {
+  width: 16px;
+  height: 16px;
+}
+
+.job-card {
+  border: 1px solid #dce7dd;
+  border-radius: 16px;
+  background: #fbfdfb;
+  padding: 16px;
+}
+
+.job-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.job-card h4 {
+  margin: 0 0 6px;
+}
+
+.job-card p {
+  margin: 0;
+  color: #66736a;
+}
+
+.equipment-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.equipment-tags span {
+  background: #f2f6ec;
+  color: #3d552d;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.job-notes {
+  margin-top: 12px !important;
+  line-height: 1.5;
+}
+
+@media (max-width: 1050px) {
+  .wide-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 850px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .job-card-header {
+    flex-direction: column;
+  }
+}
