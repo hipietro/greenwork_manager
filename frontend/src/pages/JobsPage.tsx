@@ -9,6 +9,14 @@ function getTodayDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function toInputDate(date: string | null) {
+  if (!date) {
+    return "";
+  }
+
+  return new Date(date).toISOString().slice(0, 10);
+}
+
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("it-IT", {
     day: "2-digit",
@@ -23,10 +31,13 @@ export function JobsPage() {
   const [jobStatuses, setJobStatuses] = useState<ConfigItem[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
 
+  const [editingJobId, setEditingJobId] = useState<number | null>(null);
+
   const [title, setTitle] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [address, setAddress] = useState("");
   const [scheduledDate, setScheduledDate] = useState(getTodayDate());
+  const [scheduledEndDate, setScheduledEndDate] = useState("");
   const [scheduledStartTime, setScheduledStartTime] = useState("");
   const [scheduledEndTime, setScheduledEndTime] = useState("");
   const [workTypeId, setWorkTypeId] = useState("");
@@ -78,10 +89,12 @@ export function JobsPage() {
   }
 
   function resetForm() {
+    setEditingJobId(null);
     setTitle("");
     setCustomerName("");
     setAddress("");
     setScheduledDate(getTodayDate());
+    setScheduledEndDate("");
     setScheduledStartTime("");
     setScheduledEndTime("");
     setWorkTypeId("");
@@ -89,6 +102,28 @@ export function JobsPage() {
     setEquipmentIds([]);
     setOperationalNotes("");
     setFinalNotes("");
+  }
+
+  function handleEdit(job: Job) {
+    setEditingJobId(job.id);
+    setTitle(job.title);
+    setCustomerName(job.customerName || "");
+    setAddress(job.address || "");
+    setScheduledDate(toInputDate(job.scheduledDate));
+    setScheduledEndDate(toInputDate(job.scheduledEndDate));
+    setScheduledStartTime(job.scheduledStartTime || "");
+    setScheduledEndTime(job.scheduledEndTime || "");
+    setWorkTypeId(job.workTypeId ? String(job.workTypeId) : "");
+    setJobStatusId(job.jobStatusId ? String(job.jobStatusId) : "");
+    setEquipmentIds(job.equipment.map((item) => item.equipmentId));
+    setOperationalNotes(job.operationalNotes || "");
+    setFinalNotes(job.finalNotes || "");
+    setErrorMessage(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -100,7 +135,12 @@ export function JobsPage() {
     }
 
     if (!scheduledDate) {
-      setErrorMessage("La data del cantiere è obbligatoria.");
+      setErrorMessage("La data di inizio del cantiere è obbligatoria.");
+      return;
+    }
+
+    if (scheduledEndDate && scheduledEndDate < scheduledDate) {
+      setErrorMessage("La data di fine non può essere precedente alla data di inizio.");
       return;
     }
 
@@ -108,22 +148,32 @@ export function JobsPage() {
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      await apiRequest<Job>("/jobs", {
-        method: "POST",
-        body: {
-          title,
-          customerName,
-          address,
-          scheduledDate,
-          scheduledStartTime,
-          scheduledEndTime,
-          workTypeId: workTypeId ? Number(workTypeId) : null,
-          jobStatusId: jobStatusId ? Number(jobStatusId) : null,
-          equipmentIds,
-          operationalNotes,
-          finalNotes,
-        },
-      });
+      const payload = {
+        title,
+        customerName,
+        address,
+        scheduledDate,
+        scheduledEndDate: scheduledEndDate || null,
+        scheduledStartTime,
+        scheduledEndTime,
+        workTypeId: workTypeId ? Number(workTypeId) : null,
+        jobStatusId: jobStatusId ? Number(jobStatusId) : null,
+        equipmentIds,
+        operationalNotes,
+        finalNotes,
+      };
+
+      if (editingJobId) {
+        await apiRequest<Job>(`/jobs/${editingJobId}`, {
+          method: "PUT",
+          body: payload,
+        });
+      } else {
+        await apiRequest<Job>("/jobs", {
+          method: "POST",
+          body: payload,
+        });
+      }
 
       setSelectedFilterDate(scheduledDate);
       resetForm();
@@ -151,6 +201,10 @@ export function JobsPage() {
       await apiRequest<null>(`/jobs/${id}`, {
         method: "DELETE",
       });
+
+      if (editingJobId === id) {
+        resetForm();
+      }
 
       await loadInitialData();
     } catch (error: any) {
@@ -186,7 +240,26 @@ export function JobsPage() {
 
       <div className="content-grid wide-form">
         <form className="panel form-panel" onSubmit={handleSubmit}>
-          <h3>Nuovo cantiere</h3>
+          <div className="form-title-row">
+            <div>
+              <h3>{editingJobId ? "Modifica cantiere" : "Nuovo cantiere"}</h3>
+              {editingJobId && (
+                <p className="panel-subtitle">
+                  Stai modificando un cantiere già registrato.
+                </p>
+              )}
+            </div>
+
+            {editingJobId && (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={resetForm}
+              >
+                Annulla
+              </button>
+            )}
+          </div>
 
           <label className="form-field">
             <span>Titolo intervento</span>
@@ -217,7 +290,7 @@ export function JobsPage() {
 
           <div className="form-row">
             <label className="form-field">
-              <span>Data</span>
+              <span>Data inizio</span>
               <input
                 type="date"
                 value={scheduledDate}
@@ -225,6 +298,17 @@ export function JobsPage() {
               />
             </label>
 
+            <label className="form-field">
+              <span>Data fine</span>
+              <input
+                type="date"
+                value={scheduledEndDate}
+                onChange={(event) => setScheduledEndDate(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="form-row">
             <label className="form-field">
               <span>Ora inizio</span>
               <input
@@ -318,7 +402,11 @@ export function JobsPage() {
           </label>
 
           <button className="primary-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Salvataggio..." : "Salva cantiere"}
+            {isSubmitting
+              ? "Salvataggio..."
+              : editingJobId
+                ? "Salva modifiche"
+                : "Salva cantiere"}
           </button>
         </form>
 
@@ -349,17 +437,32 @@ export function JobsPage() {
                       </p>
                     </div>
 
-                    <button
-                      className="danger-button"
-                      type="button"
-                      onClick={() => handleDelete(job.id)}
-                    >
-                      Elimina
-                    </button>
+                    <div className="actions-row">
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => handleEdit(job)}
+                      >
+                        Modifica
+                      </button>
+
+                      <button
+                        className="danger-button"
+                        type="button"
+                        onClick={() => handleDelete(job.id)}
+                      >
+                        Elimina
+                      </button>
+                    </div>
                   </div>
 
                   <div className="job-meta">
-                    <span>{formatDate(job.scheduledDate)}</span>
+                    <span>
+                      {formatDate(job.scheduledDate)}
+                      {job.scheduledEndDate
+                        ? ` - ${formatDate(job.scheduledEndDate)}`
+                        : ""}
+                    </span>
                     <span>{job.scheduledStartTime || "Orario non indicato"}</span>
                     <span>{job.workType?.name || "Tipo non indicato"}</span>
                     <span>{job.jobStatus?.name || "Senza stato"}</span>

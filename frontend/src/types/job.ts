@@ -4,6 +4,7 @@ export type Job = {
   customerName: string | null;
   address: string | null;
   scheduledDate: string;
+  scheduledEndDate: string | null;
   scheduledStartTime: string | null;
   scheduledEndTime: string | null;
   operationalNotes: string | null;

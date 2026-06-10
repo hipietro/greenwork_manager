@@ -654,3 +654,14 @@ select {
     flex-direction: column;
   }
 }
+
+.form-title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.form-title-row h3 {
+  margin-bottom: 4px;
+}
