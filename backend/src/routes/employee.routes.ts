@@ -145,7 +145,36 @@ router.patch("/:id/deactivate", async (req, res) => {
     res.status(500).json({ message: "Errore durante la disattivazione del dipendente." });
   }
 });
+/**
+ * PATCH /api/employees/:id/activate
+ * Reactivates an employee.
+ */
+router.patch("/:id/activate", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
 
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ message: "ID dipendente non valido." });
+    }
+
+    const employee = await prisma.employee.update({
+      where: { id },
+      data: {
+        isActive: true,
+      },
+    });
+
+    res.json(employee);
+  } catch (error: any) {
+    console.error("Error activating employee:", error);
+
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "Dipendente non trovato." });
+    }
+
+    res.status(500).json({ message: "Errore durante la riattivazione del dipendente." });
+  }
+});
 /**
  * DELETE /api/employees/:id
  * Deletes an employee.
