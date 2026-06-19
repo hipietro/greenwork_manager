@@ -30,23 +30,21 @@ if (typeof date === "string") {
   const start = new Date(`${date}T00:00:00.000Z`);
   const end = new Date(`${date}T23:59:59.999Z`);
 
-  where.AND = [
+  where.OR = [
     {
+      scheduledEndDate: null,
       scheduledDate: {
+        gte: start,
         lte: end,
       },
     },
     {
-      OR: [
-        {
-          scheduledEndDate: null,
-        },
-        {
-          scheduledEndDate: {
-            gte: start,
-          },
-        },
-      ],
+      scheduledDate: {
+        lte: end,
+      },
+      scheduledEndDate: {
+        gte: start,
+      },
     },
   ];
 }
