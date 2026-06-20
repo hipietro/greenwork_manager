@@ -1,6 +1,11 @@
+import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
+dotenv.config();
+
 const prisma = new PrismaClient();
+
 async function main() {
   const jobStatuses = [
     "Programmato",
@@ -56,6 +61,32 @@ async function main() {
       update: {},
       create: { name },
     });
+  }
+
+  const adminUsername = process.env.ADMIN_USERNAME?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminUsername || !adminPassword) {
+    console.warn(
+      "Admin user was not created because ADMIN_USERNAME or ADMIN_PASSWORD is missing."
+    );
+  } else {
+    const passwordHash = await bcrypt.hash(adminPassword, 12);
+
+    await prisma.user.upsert({
+      where: {
+        username: adminUsername,
+      },
+      update: {
+        passwordHash,
+      },
+      create: {
+        username: adminUsername,
+        passwordHash,
+      },
+    });
+
+    console.log(`Admin user '${adminUsername}' created or updated successfully.`);
   }
 
   console.log("Seed completed successfully.");

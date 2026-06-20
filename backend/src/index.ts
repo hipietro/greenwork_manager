@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import authRoutes from "./routes/auth.routes";
 import equipmentRoutes from "./routes/equipment.routes";
 import workTypeRoutes from "./routes/workType.routes";
 import jobStatusRoutes from "./routes/jobStatus.routes";
@@ -8,6 +9,7 @@ import employeeRoutes from "./routes/employee.routes";
 import jobRoutes from "./routes/job.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import attendanceRoutes from "./routes/attendance.routes";
+import { requireAuth } from "./middleware/requireAuth";
 
 dotenv.config();
 
@@ -24,13 +26,15 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.use("/api/equipment", equipmentRoutes);
-app.use("/api/work-types", workTypeRoutes);
-app.use("/api/job-statuses", jobStatusRoutes);
-app.use("/api/employees", employeeRoutes);
-app.use("/api/jobs", jobRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/attendance", attendanceRoutes);
+app.use("/api/auth", authRoutes);
+
+app.use("/api/equipment", requireAuth, equipmentRoutes);
+app.use("/api/work-types", requireAuth, workTypeRoutes);
+app.use("/api/job-statuses", requireAuth, jobStatusRoutes);
+app.use("/api/employees", requireAuth, employeeRoutes);
+app.use("/api/jobs", requireAuth, jobRoutes);
+app.use("/api/dashboard", requireAuth, dashboardRoutes);
+app.use("/api/attendance", requireAuth, attendanceRoutes);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

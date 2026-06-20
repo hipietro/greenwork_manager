@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { clearAuthToken } from "../services/api";
 
 const navItems = [
   { to: "/", label: "Dashboard" },
@@ -10,6 +11,13 @@ const navItems = [
 ];
 
 export function AppLayout() {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    clearAuthToken();
+    navigate("/login");
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -35,6 +43,10 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
+
+        <button className="logout-button" type="button" onClick={handleLogout}>
+          Esci
+        </button>
       </aside>
 
       <main className="main-content">
