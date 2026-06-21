@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import path from "path";
 import { env } from "./config/env";
 import { corsOptions } from "./config/security";
 import { requireAuth } from "./middleware/requireAuth";
@@ -38,6 +39,16 @@ app.use("/api/employees", requireAuth, employeeRoutes);
 app.use("/api/jobs", requireAuth, jobRoutes);
 app.use("/api/dashboard", requireAuth, dashboardRoutes);
 app.use("/api/attendance", requireAuth, attendanceRoutes);
+
+if (env.nodeEnv === "production") {
+  const frontendDistPath = path.join(__dirname, "../../frontend/dist");
+
+  app.use(express.static(frontendDistPath));
+
+  app.get(/.*/, (_req, res) => {
+    res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+}
 
 app.listen(env.port, () => {
   console.log(`Server running on http://localhost:${env.port}`);
