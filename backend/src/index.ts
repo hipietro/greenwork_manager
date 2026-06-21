@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import helmet from "helmet";
+import { env } from "./config/env";
+import { corsOptions } from "./config/security";
+import { requireAuth } from "./middleware/requireAuth";
 import authRoutes from "./routes/auth.routes";
 import equipmentRoutes from "./routes/equipment.routes";
 import workTypeRoutes from "./routes/workType.routes";
@@ -9,15 +12,15 @@ import employeeRoutes from "./routes/employee.routes";
 import jobRoutes from "./routes/job.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import attendanceRoutes from "./routes/attendance.routes";
-import { requireAuth } from "./middleware/requireAuth";
-
-dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "100kb" }));
 
 app.get("/health", (_req, res) => {
   res.json({
@@ -36,6 +39,6 @@ app.use("/api/jobs", requireAuth, jobRoutes);
 app.use("/api/dashboard", requireAuth, dashboardRoutes);
 app.use("/api/attendance", requireAuth, attendanceRoutes);
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.listen(env.port, () => {
+  console.log(`Server running on http://localhost:${env.port}`);
 });

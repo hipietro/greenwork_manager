@@ -1,26 +1,18 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env";
+import { loginRateLimiter } from "../config/security";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
 
 const router = Router();
 
-function getJwtSecret() {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    throw new Error("JWT_SECRET is not configured.");
-  }
-
-  return secret;
-}
-
 /**
  * POST /api/auth/login
  * Authenticates the admin user.
  */
-router.post("/login", async (req, res) => {
+router.post("/login", loginRateLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -30,6 +22,10 @@ router.post("/login", async (req, res) => {
 
     if (!password || typeof password !== "string") {
       return res.status(400).json({ message: "Password obbligatoria." });
+    }
+
+    if (username.length > 80 || password.length > 200) {
+      return res.status(400).json({ message: "Credenziali non valide." });
     }
 
     const user = await prisma.user.findUnique({
@@ -53,7 +49,7 @@ router.post("/login", async (req, res) => {
         userId: user.id,
         username: user.username,
       },
-      getJwtSecret(),
+      env.jwtSecret,
       {
         expiresIn: "8h",
       }

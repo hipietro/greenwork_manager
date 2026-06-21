@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env";
 
 type AuthUser = {
   userId: number;
@@ -12,16 +13,6 @@ declare global {
       user?: AuthUser;
     }
   }
-}
-
-function getJwtSecret() {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    throw new Error("JWT_SECRET is not configured.");
-  }
-
-  return secret;
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -38,7 +29,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
       return res.status(401).json({ message: "Token mancante." });
     }
 
-    const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
+    const decoded = jwt.verify(token, env.jwtSecret) as AuthUser;
 
     req.user = {
       userId: decoded.userId,
