@@ -1,5 +1,22 @@
 # GreenWork Manager
 
+## Live Demo
+
+The application is currently deployed online and available at:
+
+https://greenwork-manager.onrender.com
+
+The project is deployed as a single-service full-stack application:
+
+* the React frontend is built with Vite
+* the Express backend serves the production frontend build
+* the API is protected with JWT authentication
+* the PostgreSQL database is hosted on Neon
+* the web service is hosted on Render
+
+Access is protected by an admin login.
+
+
 GreenWork Manager is a lightweight management application designed for small gardening companies.
 
 The goal of the project is to help organize daily gardening jobs, manage clients and employees, track equipment usage, and keep an operational history of completed and pending work.
