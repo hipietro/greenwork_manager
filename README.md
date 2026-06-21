@@ -171,15 +171,15 @@ There is no public registration flow. The application is intended as a private m
 
 ### Jobs
 
-![Jobs](docs/screenshots/jobs.png)
+![Jobs](docs/screenshots/cantieri.png)
 
 ### Attendance
 
-![Attendance](docs/screenshots/attendance.png)
+![Attendance](docs/screenshots/presenze.png)
 
-### Settings
+### Tools
 
-![Settings](docs/screenshots/settings.png)
+![Settings](docs/screenshots/attrezzi.png)
 
 If screenshots are not available yet, this section can be removed temporarily.
 
