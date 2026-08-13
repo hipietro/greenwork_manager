@@ -5,6 +5,7 @@ import { env } from "../config/env";
 type AuthUser = {
   userId: number;
   username: string;
+  role: "ADMIN" | "DEMO";
 };
 
 declare global {
@@ -34,6 +35,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     req.user = {
       userId: decoded.userId,
       username: decoded.username,
+      role: decoded.role,
     };
 
     next();
@@ -41,4 +43,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     console.error("Authentication error:", error);
     return res.status(401).json({ message: "Sessione non valida o scaduta." });
   }
+}
+
+export function requireWriteAccess(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.role === "DEMO") {
+    return res.status(403).json({
+      message: "L'account demo è in sola lettura.",
+      code: "DEMO_READ_ONLY",
+    });
+  }
+
+  next();
 }

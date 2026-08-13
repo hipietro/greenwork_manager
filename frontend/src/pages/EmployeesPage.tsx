@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { apiRequest } from "../services/api";
+import { apiRequest, isDemoUser } from "../services/api";
 import type { Employee } from "../types/employee";
 
 export function EmployeesPage() {
+  const canWrite = !isDemoUser();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [editingEmployeeId, setEditingEmployeeId] = useState<number | null>(null);
 
@@ -171,7 +172,7 @@ export function EmployeesPage() {
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
       <div className="content-grid">
-        <form className="panel form-panel" onSubmit={handleSubmit}>
+        {canWrite && <form className="panel form-panel" onSubmit={handleSubmit}>
           <div className="form-title-row">
             <div>
               <h3>{editingEmployeeId ? "Modifica dipendente" : "Nuovo dipendente"}</h3>
@@ -228,7 +229,7 @@ export function EmployeesPage() {
                 ? "Salva modifiche"
                 : "Aggiungi dipendente"}
           </button>
-        </form>
+        </form>}
 
         <div className="panel">
           <div className="panel-header">
@@ -254,7 +255,7 @@ export function EmployeesPage() {
                     {employee.notes && <p>{employee.notes}</p>}
                   </div>
 
-                  <div className="actions-row">
+                  {canWrite && <div className="actions-row">
                     <button
                       className="secondary-button"
                       type="button"
@@ -270,7 +271,7 @@ export function EmployeesPage() {
                     >
                       Disattiva
                     </button>
-                  </div>
+                  </div>}
                 </article>
               ))}
             </div>
@@ -308,7 +309,7 @@ export function EmployeesPage() {
                           {employee.notes && <p>{employee.notes}</p>}
                         </div>
 
-                        <div className="actions-row">
+                        {canWrite && <div className="actions-row">
                           <button
                             className="secondary-button"
                             type="button"
@@ -332,7 +333,7 @@ export function EmployeesPage() {
                           >
                             Elimina
                           </button>
-                        </div>
+                        </div>}
                       </article>
                     ))}
                   </div>

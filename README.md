@@ -12,7 +12,17 @@ The application is deployed online and available at:
 
 https://greenwork-manager.onrender.com
 
-Access is protected by an admin login.
+Visitors can explore the application with the public read-only account:
+
+```text
+username: demo
+password: GreenWorkDemo2026!
+```
+
+The demo account can view the current data but cannot create, edit, delete,
+activate, deactivate or save anything. The backend enforces this restriction
+with `403 Forbidden` responses, so it cannot be bypassed by calling the API
+directly. The private admin account retains full access.
 
 The current production setup uses:
 
@@ -156,12 +166,13 @@ The application includes a basic admin login system.
 
 Current authentication features:
 
-* admin login
+* admin and read-only demo login
 * JWT-based authentication
 * protected API routes
 * password hashing with bcrypt
 * login rate limiting
 * logout support
+* server-enforced role-based write protection for the demo account
 
 There is no public registration flow. The application is intended as a private management tool.
 
@@ -286,6 +297,9 @@ DATABASE_URL="postgresql://postgres@localhost:5432/greenwork_manager?schema=publ
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="change_this_password"
 
+DEMO_USERNAME="demo"
+DEMO_PASSWORD="GreenWorkDemo2026!"
+
 JWT_SECRET="change_this_with_a_long_random_secret"
 
 CORS_ORIGIN="http://localhost:5173,http://localhost:3000"
@@ -350,6 +364,10 @@ After seeding the database, use the admin credentials defined in the backend `.e
 username: admin
 password: value of ADMIN_PASSWORD
 ```
+
+To test read-only mode, use the values configured in `DEMO_USERNAME` and
+`DEMO_PASSWORD`. Running `npm run seed` creates or updates both accounts
+idempotently and assigns their roles explicitly.
 
 ## Production-like Local Test
 
@@ -440,6 +458,9 @@ DATABASE_URL=postgresql://your_neon_connection_string
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_secure_admin_password
 
+DEMO_USERNAME=demo
+DEMO_PASSWORD=GreenWorkDemo2026!
+
 JWT_SECRET=your_long_random_secret
 
 CORS_ORIGIN=https://your-render-service.onrender.com
@@ -451,6 +472,8 @@ Important notes:
 * do not include quotes around values in the Render dashboard
 * `DATABASE_URL` must start with `postgresql://` or `postgres://`
 * `ADMIN_PASSWORD` is used by the seed script to create or update the admin user
+* `DEMO_USERNAME` and `DEMO_PASSWORD` create or update the public read-only user
+* configure the published demo password in Render; do not store deployed secrets in committed `.env` files
 * changing `JWT_SECRET` invalidates existing login sessions
 
 ### Database
@@ -515,6 +538,7 @@ Current security measures:
 
 * JWT-based authentication
 * protected API routes
+* backend-enforced admin/demo roles; demo mutations return `403 Forbidden`
 * password hashing with bcrypt
 * login rate limiting
 * Helmet security headers
@@ -527,7 +551,6 @@ The current authentication system is intentionally simple and designed for a sma
 Future security improvements may include:
 
 * HttpOnly cookie-based sessions
-* user roles
 * password reset flow
 * audit logs
 * stronger input validation
@@ -540,10 +563,8 @@ The current version does not include:
 * estimates
 * accounting
 * advanced customer management
-* role-based permissions
 * payroll calculations
 * advanced reports
-* automated tests
 * mobile app
 * backup management from the UI
 
