@@ -48,6 +48,7 @@ router.post("/login", loginRateLimiter, async (req, res) => {
       {
         userId: user.id,
         username: user.username,
+        role: user.role,
       },
       env.jwtSecret,
       {
@@ -60,6 +61,7 @@ router.post("/login", loginRateLimiter, async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
+        role: user.role,
       },
     });
   } catch (error) {

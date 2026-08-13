@@ -1,14 +1,12 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiRequest, setAuthToken } from "../services/api";
+import { apiRequest, setAuthSession } from "../services/api";
+import type { AuthUser } from "../services/api";
 
 type LoginResponse = {
   token: string;
-  user: {
-    id: number;
-    username: string;
-  };
+  user: AuthUser;
 };
 
 export function LoginPage() {
@@ -45,7 +43,7 @@ export function LoginPage() {
         },
       });
 
-      setAuthToken(response.token);
+      setAuthSession(response.token, response.user);
       navigate("/");
     } catch (error: any) {
       console.error(error);

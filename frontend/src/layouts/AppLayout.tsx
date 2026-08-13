@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { clearAuthToken } from "../services/api";
+import { clearAuthSession, isDemoUser } from "../services/api";
 
 const navItems = [
   { to: "/", label: "Dashboard" },
@@ -12,9 +12,10 @@ const navItems = [
 
 export function AppLayout() {
   const navigate = useNavigate();
+  const demoMode = isDemoUser();
 
   function handleLogout() {
-    clearAuthToken();
+    clearAuthSession();
     navigate("/login");
   }
 
@@ -50,6 +51,11 @@ export function AppLayout() {
       </aside>
 
       <main className="main-content">
+        {demoMode && (
+          <div className="demo-read-only-banner" role="status">
+            Demo read-only · Puoi esplorare i dati, ma non modificarli.
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

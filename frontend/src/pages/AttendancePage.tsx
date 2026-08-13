@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { apiRequest } from "../services/api";
+import { apiRequest, isDemoUser } from "../services/api";
 import type { AttendanceRecord } from "../types/attendance";
 import type { Employee } from "../types/employee";
 
@@ -24,6 +24,7 @@ function createEmptyForm(): AttendanceFormState {
 }
 
 export function AttendancePage() {
+  const canWrite = !isDemoUser();
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -242,6 +243,7 @@ export function AttendancePage() {
                   <label className="form-field compact-field">
                     <span>Stato</span>
                     <select
+                      disabled={!canWrite}
                       value={form.isPresent ? "present" : "absent"}
                       onChange={(event) =>
                         updateForm(
@@ -261,7 +263,7 @@ export function AttendancePage() {
                     <input
                       type="time"
                       value={form.checkInTime}
-                      disabled={!form.isPresent}
+                      disabled={!canWrite || !form.isPresent}
                       onChange={(event) =>
                         updateForm(employee.id, "checkInTime", event.target.value)
                       }
@@ -273,7 +275,7 @@ export function AttendancePage() {
                     <input
                       type="time"
                       value={form.checkOutTime}
-                      disabled={!form.isPresent}
+                      disabled={!canWrite || !form.isPresent}
                       onChange={(event) =>
                         updateForm(employee.id, "checkOutTime", event.target.value)
                       }
@@ -283,6 +285,7 @@ export function AttendancePage() {
                   <label className="form-field compact-field notes-field">
                     <span>Note</span>
                     <input
+                      disabled={!canWrite}
                       value={form.notes}
                       onChange={(event) =>
                         updateForm(employee.id, "notes", event.target.value)
@@ -291,7 +294,7 @@ export function AttendancePage() {
                     />
                   </label>
 
-                  <div className="attendance-actions">
+                  {canWrite && <div className="attendance-actions">
                     <button
                       className="primary-button"
                       type="button"
@@ -310,7 +313,7 @@ export function AttendancePage() {
                         Elimina
                       </button>
                     )}
-                  </div>
+                  </div>}
                 </article>
               );
             })}

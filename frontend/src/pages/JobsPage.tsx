@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { apiRequest } from "../services/api";
+import { apiRequest, isDemoUser } from "../services/api";
 import type { Equipment } from "../types/equipment";
 import type { Job } from "../types/job";
 import type { ConfigItem } from "../types/settings";
@@ -26,6 +26,7 @@ function formatDate(date: string) {
 }
 
 export function JobsPage() {
+  const canWrite = !isDemoUser();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [workTypes, setWorkTypes] = useState<ConfigItem[]>([]);
   const [jobStatuses, setJobStatuses] = useState<ConfigItem[]>([]);
@@ -239,7 +240,7 @@ export function JobsPage() {
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
       <div className="content-grid wide-form">
-        <form className="panel form-panel" onSubmit={handleSubmit}>
+        {canWrite && <form className="panel form-panel" onSubmit={handleSubmit}>
           <div className="form-title-row">
             <div>
               <h3>{editingJobId ? "Modifica cantiere" : "Nuovo cantiere"}</h3>
@@ -408,7 +409,7 @@ export function JobsPage() {
                 ? "Salva modifiche"
                 : "Salva cantiere"}
           </button>
-        </form>
+        </form>}
 
         <div className="panel">
           <div className="panel-header">
@@ -437,7 +438,7 @@ export function JobsPage() {
                       </p>
                     </div>
 
-                    <div className="actions-row">
+                    {canWrite && <div className="actions-row">
                       <button
                         className="secondary-button"
                         type="button"
@@ -453,7 +454,7 @@ export function JobsPage() {
                       >
                         Elimina
                       </button>
-                    </div>
+                    </div>}
                   </div>
 
                   <div className="job-meta">

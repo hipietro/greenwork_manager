@@ -77,16 +77,32 @@ async function main() {
       where: {
         username: adminUsername,
       },
-      update: {
-        passwordHash,
-      },
       create: {
         username: adminUsername,
         passwordHash,
+        role: "ADMIN",
       },
+      update: { passwordHash, role: "ADMIN" },
     });
 
     console.log(`Admin user '${adminUsername}' created or updated successfully.`);
+  }
+
+  const demoUsername = process.env.DEMO_USERNAME?.trim().toLowerCase();
+  const demoPassword = process.env.DEMO_PASSWORD;
+
+  if (!demoUsername || !demoPassword) {
+    console.warn("Demo user was not created because DEMO_USERNAME or DEMO_PASSWORD is missing.");
+  } else if (demoUsername === adminUsername) {
+    throw new Error("DEMO_USERNAME must be different from ADMIN_USERNAME.");
+  } else {
+    const passwordHash = await bcrypt.hash(demoPassword, 12);
+    await prisma.user.upsert({
+      where: { username: demoUsername },
+      update: { passwordHash, role: "DEMO" },
+      create: { username: demoUsername, passwordHash, role: "DEMO" },
+    });
+    console.log(`Demo user '${demoUsername}' created or updated successfully.`);
   }
 
   console.log("Seed completed successfully.");

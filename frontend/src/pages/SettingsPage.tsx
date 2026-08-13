@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { apiRequest } from "../services/api";
+import { apiRequest, isDemoUser } from "../services/api";
 import type { ConfigItem } from "../types/settings";
 
 type ConfigSectionProps = {
@@ -18,6 +18,7 @@ function ConfigSection({
   inputPlaceholder,
   endpoint,
 }: ConfigSectionProps) {
+  const canWrite = !isDemoUser();
   const [items, setItems] = useState<ConfigItem[]>([]);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [name, setName] = useState("");
@@ -169,7 +170,7 @@ function ConfigSection({
 
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
-      <form className="inline-form" onSubmit={handleSubmit}>
+      {canWrite && <form className="inline-form" onSubmit={handleSubmit}>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
@@ -193,7 +194,7 @@ function ConfigSection({
             Annulla
           </button>
         )}
-      </form>
+      </form>}
 
       <div className="settings-list-block">
         <h4>Voci attive</h4>
@@ -210,7 +211,7 @@ function ConfigSection({
                   <strong>{item.name}</strong>
                 </div>
 
-                <div className="actions-row">
+                {canWrite && <div className="actions-row">
                   <button
                     className="secondary-button"
                     type="button"
@@ -226,7 +227,7 @@ function ConfigSection({
                   >
                     Disattiva
                   </button>
-                </div>
+                </div>}
               </article>
             ))}
           </div>
@@ -263,7 +264,7 @@ function ConfigSection({
                       <strong>{item.name}</strong>
                     </div>
 
-                    <div className="actions-row">
+                    {canWrite && <div className="actions-row">
                       <button
                         className="secondary-button"
                         type="button"
@@ -287,7 +288,7 @@ function ConfigSection({
                       >
                         Elimina
                       </button>
-                    </div>
+                    </div>}
                   </article>
                 ))}
               </div>

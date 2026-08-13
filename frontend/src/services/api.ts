@@ -6,16 +6,40 @@ type RequestOptions = {
   skipAuth?: boolean;
 };
 
+export type AuthUser = {
+  id: number;
+  username: string;
+  role: "ADMIN" | "DEMO";
+};
+
 export function getAuthToken() {
   return localStorage.getItem("greenwork_auth_token");
 }
 
-export function setAuthToken(token: string) {
+export function setAuthSession(token: string, user: AuthUser) {
   localStorage.setItem("greenwork_auth_token", token);
+  localStorage.setItem("greenwork_auth_user", JSON.stringify(user));
 }
 
-export function clearAuthToken() {
+export function getAuthUser(): AuthUser | null {
+  const storedUser = localStorage.getItem("greenwork_auth_user");
+  if (!storedUser) return null;
+
+  try {
+    return JSON.parse(storedUser) as AuthUser;
+  } catch {
+    clearAuthSession();
+    return null;
+  }
+}
+
+export function isDemoUser() {
+  return getAuthUser()?.role === "DEMO";
+}
+
+export function clearAuthSession() {
   localStorage.removeItem("greenwork_auth_token");
+  localStorage.removeItem("greenwork_auth_user");
 }
 
 export async function apiRequest<T>(
@@ -23,6 +47,11 @@ export async function apiRequest<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   const token = getAuthToken();
+  const method = options.method || "GET";
+
+  if (method !== "GET" && !options.skipAuth && isDemoUser()) {
+    throw new Error("L'account demo è in sola lettura.");
+  }
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -33,13 +62,13 @@ export async function apiRequest<T>(
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: options.method || "GET",
+    method,
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
   if (response.status === 401 && !options.skipAuth) {
-    clearAuthToken();
+    clearAuthSession();
     window.location.href = "/login";
     throw new Error("Sessione scaduta. Effettua di nuovo l'accesso.");
   }

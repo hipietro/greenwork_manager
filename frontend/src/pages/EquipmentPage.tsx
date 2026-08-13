@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { apiRequest } from "../services/api";
+import { apiRequest, isDemoUser } from "../services/api";
 import type { Equipment } from "../types/equipment";
 
 export function EquipmentPage() {
+  const canWrite = !isDemoUser();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [editingEquipmentId, setEditingEquipmentId] = useState<number | null>(null);
 
@@ -167,7 +168,7 @@ export function EquipmentPage() {
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
       <div className="content-grid">
-        <form className="panel form-panel" onSubmit={handleSubmit}>
+        {canWrite && <form className="panel form-panel" onSubmit={handleSubmit}>
           <div className="form-title-row">
             <div>
               <h3>{editingEquipmentId ? "Modifica attrezzatura" : "Nuova attrezzatura"}</h3>
@@ -215,7 +216,7 @@ export function EquipmentPage() {
                 ? "Salva modifiche"
                 : "Aggiungi attrezzatura"}
           </button>
-        </form>
+        </form>}
 
         <div className="panel">
           <div className="panel-header">
@@ -240,7 +241,7 @@ export function EquipmentPage() {
                     <p>{item.notes || "Nessuna nota"}</p>
                   </div>
 
-                  <div className="actions-row">
+                  {canWrite && <div className="actions-row">
                     <button
                       className="secondary-button"
                       type="button"
@@ -256,7 +257,7 @@ export function EquipmentPage() {
                     >
                       Disattiva
                     </button>
-                  </div>
+                  </div>}
                 </article>
               ))}
             </div>
@@ -293,7 +294,7 @@ export function EquipmentPage() {
                           <p>{item.notes || "Nessuna nota"}</p>
                         </div>
 
-                        <div className="actions-row">
+                        {canWrite && <div className="actions-row">
                           <button
                             className="secondary-button"
                             type="button"
@@ -317,7 +318,7 @@ export function EquipmentPage() {
                           >
                             Elimina
                           </button>
-                        </div>
+                        </div>}
                       </article>
                     ))}
                   </div>

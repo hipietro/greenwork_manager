@@ -4,7 +4,7 @@ import helmet from "helmet";
 import path from "path";
 import { env } from "./config/env";
 import { corsOptions } from "./config/security";
-import { requireAuth } from "./middleware/requireAuth";
+import { requireAuth, requireWriteAccess } from "./middleware/requireAuth";
 import authRoutes from "./routes/auth.routes";
 import equipmentRoutes from "./routes/equipment.routes";
 import workTypeRoutes from "./routes/workType.routes";
@@ -32,13 +32,22 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 
-app.use("/api/equipment", requireAuth, equipmentRoutes);
-app.use("/api/work-types", requireAuth, workTypeRoutes);
-app.use("/api/job-statuses", requireAuth, jobStatusRoutes);
-app.use("/api/employees", requireAuth, employeeRoutes);
-app.use("/api/jobs", requireAuth, jobRoutes);
-app.use("/api/dashboard", requireAuth, dashboardRoutes);
-app.use("/api/attendance", requireAuth, attendanceRoutes);
+// Read-only demo authorization is enforced centrally for every protected
+// mutating request, including requests made outside the frontend.
+app.use("/api", requireAuth, (req, res, next) => {
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
+    return requireWriteAccess(req, res, next);
+  }
+  next();
+});
+
+app.use("/api/equipment", equipmentRoutes);
+app.use("/api/work-types", workTypeRoutes);
+app.use("/api/job-statuses", jobStatusRoutes);
+app.use("/api/employees", employeeRoutes);
+app.use("/api/jobs", jobRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 if (env.nodeEnv === "production") {
   const frontendDistPath = path.join(__dirname, "../../frontend/dist");
